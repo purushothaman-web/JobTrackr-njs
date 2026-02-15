@@ -1,14 +1,15 @@
 {
-  "name": "jobtrackr-njs",
+  "name": "jobtrackr",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "postinstall": "prisma generate",
     "start:prod": "npm run prisma:migrate:deploy && npm run build && npm run start"
   },
   "dependencies": {

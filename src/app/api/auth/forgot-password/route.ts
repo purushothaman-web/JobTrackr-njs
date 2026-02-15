@@ -4,6 +4,8 @@ import { prisma } from '@/lib/db';
 import { sendEmail } from '@/lib/utils/email';
 import { enforceRateLimit } from '@/lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const rateLimited = enforceRateLimit(req, {
