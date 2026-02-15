@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+model User {
+  id                    Int       @id @default(autoincrement())
+  name                  String    @unique
+  email                 String    @unique
+  password              String?
+  googleId              String?   @unique
+  resetPasswordToken    String?   
+  resetPasswordExpires  DateTime?
+  emailVerified         Boolean   @default(false)
+  emailVerificationToken String?  @unique
+  jobs                  Job[]
+  companies             Company[]
+  interviews            Interview[]
+  activities            Activity[]
+}
+
+
+model Job {
+  id         Int        @id @default(autoincrement())
+  position   String
+  company    String
+  status     String
+  location   String?
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  userId     Int
+  companyId  Int?
+  user       User       @relation(fields: [userId], references: [id])
+  companyRef Company?   @relation("CompanyJobs", fields: [companyId], references: [id], onDelete: SetNull)
+  interviews Interview[]
+  activities Activity[]
+
+  @@index([userId, position, company])
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  website   String?
+  industry  String?
+  location  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs      Job[]    @relation("CompanyJobs")
+
+  @@unique([userId, name])
+  @@index([userId, name])
+}
+
+model Interview {
+  id          Int      @id @default(autoincrement())
+  scheduledAt DateTime
+  mode        String?
+  round       String?
+  status      String   @default("scheduled")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobId       Int
+  userId      Int
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduledAt])
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  type        String
+  description String
+  fromValue   String?
+  toValue     String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  jobId       Int
+  userId      Int
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, createdAt])
+}

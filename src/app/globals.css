@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  --font-heading: "Space Grotesk", sans-serif;
+  --font-body: "Manrope", sans-serif;
+}
+
+:root {
+  --bg-main: #f3f6f8;
+  --bg-elevated: #ffffff;
+  --text-main: #0f172a;
+  --text-subtle: #475569;
+  --border-main: #dbe3ea;
+  --accent: #0f766e;
+  --accent-strong: #115e59;
+  --accent-muted: #ccfbf1;
+}
+
+body {
+  background:
+    radial-gradient(circle at 0% 0%, #dff6f3 0, transparent 35%),
+    radial-gradient(circle at 100% 20%, #e8f2ff 0, transparent 30%),
+    var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-body);
+}
+
+.page-shell {
+  padding: 1.25rem;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.86);
+  border-bottom: 1px solid var(--border-main);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-mark {
+  display: inline-flex;
+  height: 2rem;
+  width: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: linear-gradient(135deg, var(--accent) 0%, #0ea5a0 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.brand-text {
+  font-family: var(--font-heading);
+  font-size: 1.12rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.nav-link {
+  border-radius: 0.65rem;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: #eff6ff;
+  color: #0c4a6e;
+}
+
+.nav-link-active {
+  background: #ecfeff;
+  color: #0f766e;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--accent) 0%, #0ea5a0 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.3);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-main);
+  background: white;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+}
+
+.card {
+  border-radius: 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-main);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.05);
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
