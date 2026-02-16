@@ -66,7 +66,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchUser();
-  }, []);
+
+    const interceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          console.warn("AuthContext: Received 401, logging out");
+          setUser(null);
+          localStorage.removeItem("user");
+          delete api.defaults.headers.common["Authorization"];
+          router.push('/');
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.response.eject(interceptor);
+    };
+  }, [router]);
 
   const register = async (data: any) => {
     try {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { deleteInterview, fetchAllInterviews, updateInterview } from '@/services/jobService';
 
@@ -97,7 +98,7 @@ const InterviewsPage = () => {
     </div>
   );
 
-  if (authLoading) return <p className="p-6">Checking authentication...</p>;
+  if (authLoading) return <Loading fullHeight message="Checking authentication..." />;
   if (!user) return <p className="p-6">Please log in to view interviews.</p>;
 
   return (
@@ -122,24 +123,36 @@ const InterviewsPage = () => {
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       </section>
 
-      {loading ? (
-        <p className="text-slate-600">Loading interviews...</p>
-      ) : (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className="card p-5">
-            <h2 className="section-title text-xl">Upcoming</h2>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="card p-5">
+          <h2 className="section-title text-xl">Upcoming</h2>
+          {loading ? (
+            <Loading />
+          ) : (
             <div className="mt-4 space-y-3">
-              {grouped.upcoming.length ? grouped.upcoming.map(renderInterview) : <p className="text-slate-600">No upcoming interviews.</p>}
+              {grouped.upcoming.length ? (
+                grouped.upcoming.map(renderInterview)
+              ) : (
+                <p className="text-slate-600">No upcoming interviews.</p>
+              )}
             </div>
-          </section>
-          <section className="card p-5">
-            <h2 className="section-title text-xl">Past</h2>
+          )}
+        </section>
+        <section className="card p-5">
+          <h2 className="section-title text-xl">Past</h2>
+          {loading ? (
+            <Loading />
+          ) : (
             <div className="mt-4 space-y-3">
-              {grouped.past.length ? grouped.past.map(renderInterview) : <p className="text-slate-600">No past interviews.</p>}
+              {grouped.past.length ? (
+                grouped.past.map(renderInterview)
+              ) : (
+                <p className="text-slate-600">No past interviews.</p>
+              )}
             </div>
-          </section>
-        </div>
-      )}
+          )}
+        </section>
+      </div>
     </div>
   );
 };

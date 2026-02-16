@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import debounce from 'lodash.debounce';
 import JobList from '@/components/JobList';
+import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { exportJobsCSV, fetchJobs } from '@/services/jobService';
 
@@ -97,7 +98,7 @@ const JobsPage = () => {
     }
   };
 
-  if (authLoading) return <p className="p-6 text-center">Checking authentication...</p>;
+  if (authLoading) return <Loading fullHeight message="Checking authentication..." />;
   if (!user) return <p className="p-6 text-center">Please log in to view jobs.</p>;
 
   return (
@@ -226,14 +227,20 @@ const JobsPage = () => {
             ))}
           </div>
 
-          <JobList jobs={jobs} onStatusUpdated={() => setPagination((prev) => ({ ...prev }))} />
+          {loading && jobs.length === 0 ? (
+            <Loading message="Loading jobs..." />
+          ) : (
+            <>
+              <JobList jobs={jobs} onStatusUpdated={() => setPagination((prev) => ({ ...prev }))} />
 
-          {pagination.page < pagination.totalPages && (
-            <div className="mt-5 text-center">
-              <button className="btn-primary" onClick={handleLoadMore} disabled={loading}>
-                {loading ? 'Loading...' : 'Load More'}
-              </button>
-            </div>
+              {pagination.page < pagination.totalPages && (
+                <div className="mt-5 text-center">
+                  <button className="btn-primary" onClick={handleLoadMore} disabled={loading}>
+                    {loading ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>

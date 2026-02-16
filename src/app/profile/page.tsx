@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { Line } from 'react-chartjs-2';
@@ -13,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import { Eye, EyeOff } from 'lucide-react';
 import { sendJobSummaryEmail, getJobStats } from '@/services/jobService';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
@@ -35,6 +37,8 @@ const ProfilePage = () => {
   const { user, updateProfile } = useAuth();
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', currentPassword: '' });
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -143,7 +147,6 @@ const ProfilePage = () => {
     },
   };
 
-  if (loading) return <div className="p-6 text-center">Loading profile...</div>;
   if (!user) return <div className="p-6 text-center">Please log in.</div>;
 
   return (
@@ -158,17 +161,21 @@ const ProfilePage = () => {
             Edit Profile
           </button>
         </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
-            <p className="mt-1 font-semibold text-slate-900">{profile?.name}</p>
+        {loading ? (
+          <Loading />
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
+              <p className="mt-1 font-semibold text-slate-900">{profile?.name}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
+              <p className="mt-1 font-semibold text-slate-900">{profile?.email}</p>
+            </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
-            <p className="mt-1 font-semibold text-slate-900">{profile?.email}</p>
-          </div>
-        </div>
-        {!user?.emailVerified && !profile?.emailVerified && (
+        )}
+        {!loading && !user?.emailVerified && !profile?.emailVerified && (
           <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
             <p className="text-sm font-semibold text-amber-900">Your email is not verified.</p>
             <button className="btn-secondary mt-3" onClick={handleResendVerification} disabled={resendLoading}>
@@ -189,19 +196,23 @@ const ProfilePage = () => {
               Send Weekly Report
             </button>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {statCards.map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
-                <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <Loading />
+          ) : (
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {statCards.map((item) => (
+                <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="card p-5 sm:p-6">
           <h2 className="section-title text-2xl">Trend</h2>
           <p className="mb-3 mt-1 text-sm text-slate-600">Status spread across your applications.</p>
-          <Line data={chartData} options={chartOptions} />
+          {loading ? <Loading /> : <Line data={chartData} options={chartOptions} />}
         </div>
       </section>
 
@@ -226,24 +237,42 @@ const ProfilePage = () => {
             placeholder="Email"
             required
           />
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2"
-            placeholder="New password (optional)"
-          />
-          {formData.password && (
+          <div className="relative">
             <input
-              type="password"
-              name="currentPassword"
-              value={formData.currentPassword}
-              onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2"
-              placeholder="Current password"
-              required
+              type={showNewPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10"
+              placeholder="New password (optional)"
             />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          {formData.password && (
+            <div className="relative">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                name="currentPassword"
+                value={formData.currentPassword}
+                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10"
+                placeholder="Current password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           )}
           <div className="flex gap-2 pt-2">
             <button type="submit" className="btn-primary flex-1" disabled={saving}>

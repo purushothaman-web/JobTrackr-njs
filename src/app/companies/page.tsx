@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { createCompany, deleteCompany, fetchCompanies, updateCompany } from '@/services/jobService';
 
@@ -100,7 +101,7 @@ const CompaniesPage = () => {
     }
   };
 
-  if (authLoading) return <p className="p-6">Checking authentication...</p>;
+  if (authLoading) return <Loading fullHeight message="Checking authentication..." />;
   if (!user) return <p className="p-6">Please log in to manage companies.</p>;
 
   return (
@@ -144,7 +145,7 @@ const CompaniesPage = () => {
         </div>
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         {loading ? (
-          <p className="mt-6 text-slate-600">Loading companies...</p>
+          <Loading message="Loading companies..." />
         ) : filtered.length === 0 ? (
           <p className="mt-6 text-slate-600">No companies found.</p>
         ) : (

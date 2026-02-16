@@ -3,14 +3,24 @@
 import React, { useState } from 'react';
 import FormField from '@/components/FormField';
 import Button from '@/components/Button';
+import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 
 const Login = () => {
-  const { login, loading, error } = useAuth();
+  const { login, loading, error, user } = useAuth();
   const router = useRouter();
+
+  if (loading) {
+    return <Loading fullHeight message="Checking session..." />;
+  }
+
+  if (user) {
+    router.replace('/jobs');
+    return null; // Don't render login form if already logged in
+  }
 
   const [formData, setFormData] = useState({
     login: '',

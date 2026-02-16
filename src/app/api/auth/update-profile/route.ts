@@ -64,6 +64,12 @@ export async function PUT(req: NextRequest) {
       if (!isMatch) {
         return NextResponse.json({ success: false, error: 'Current password is incorrect' }, { status: 401 });
       }
+
+      const isSameAsOld = await bcrypt.compare(password, user.password);
+      if (isSameAsOld) {
+        return NextResponse.json({ success: false, error: 'New password cannot be the same as the current password' }, { status: 400 });
+      }
+
       hashedPassword = await bcrypt.hash(password, 10);
     }
 
