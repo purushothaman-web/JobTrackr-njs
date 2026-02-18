@@ -12,6 +12,7 @@ import {
   updateInterview,
   deleteJob,
 } from '@/services/jobService';
+import Loading from '@/components/Loading';
 
 const JobDetailsPage = () => {
   const { id } = useParams();
@@ -107,9 +108,9 @@ const JobDetailsPage = () => {
     }
   };
 
-  if (authLoading) return <p className="p-6">Checking authentication...</p>;
+  if (authLoading) return <Loading fullHeight message="Checking authentication..." />;
   if (!user) return <p className="p-6">Please log in.</p>;
-  if (loading) return <p className="p-6">Loading job details...</p>;
+  if (loading) return <Loading fullHeight message="Loading job details..." />;
   if (!job) return <p className="p-6">Job not found.</p>;
 
   return (
