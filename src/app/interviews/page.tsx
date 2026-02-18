@@ -37,8 +37,16 @@ const InterviewsPage = () => {
   const grouped = useMemo(() => {
     const now = Date.now();
     return {
-      upcoming: interviews.filter((i) => new Date(i.scheduledAt).getTime() >= now),
-      past: interviews.filter((i) => new Date(i.scheduledAt).getTime() < now),
+      upcoming: interviews.filter((i) => {
+        const isFuture = new Date(i.scheduledAt).getTime() >= now;
+        const isPending = i.status !== 'completed' && i.status !== 'cancelled';
+        return isFuture && isPending;
+      }),
+      past: interviews.filter((i) => {
+        const isPast = new Date(i.scheduledAt).getTime() < now;
+        const isDone = i.status === 'completed' || i.status === 'cancelled';
+        return isPast || isDone;
+      }),
     };
   }, [interviews]);
 
@@ -70,7 +78,7 @@ const InterviewsPage = () => {
           <p className="font-semibold text-slate-900">{interview.job.position}</p>
           <p className="text-sm text-slate-600">{interview.job.company}</p>
           <p className="mt-1 text-sm text-slate-700">
-            {new Date(interview.scheduledAt).toLocaleString('en-US', { timeZone: 'UTC' })}
+            {new Date(interview.scheduledAt).toLocaleString()}
           </p>
           <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
             {interview.mode || 'Mode N/A'} · {interview.round || 'Round N/A'} · {interview.status}

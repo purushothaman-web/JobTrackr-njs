@@ -13,6 +13,11 @@ const Login = () => {
   const { login, loading, error, user } = useAuth();
   const router = useRouter();
 
+  const [formData, setFormData] = useState({
+    login: '',
+    password: '',
+  });
+
   if (loading) {
     return <Loading fullHeight message="Checking session..." />;
   }
@@ -21,11 +26,6 @@ const Login = () => {
     router.replace('/jobs');
     return null; // Don't render login form if already logged in
   }
-
-  const [formData, setFormData] = useState({
-    login: '',
-    password: '',
-  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });

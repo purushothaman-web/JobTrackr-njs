@@ -58,8 +58,16 @@ const JobCard = ({ job, onStatusUpdated }: { job: any, onStatusUpdated?: () => v
           <h3 className="text-xl font-bold text-slate-800 tracking-tight group-hover:text-violet-600 transition-colors">
             {job.position}
           </h3>
-          <p className="mt-1 text-sm font-medium text-slate-500">{job.company}</p>
         </Link>
+        <div className="relative z-10 mt-1">
+          <Link 
+            href={`/jobs?search=${encodeURIComponent(job.company)}`}
+            className="text-sm font-medium text-slate-500 hover:text-indigo-600 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {job.company}
+          </Link>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center gap-x-4 text-xs text-slate-500">

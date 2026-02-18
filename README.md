@@ -1,6 +1,14 @@
 # JobTrackr (Next.js)
 
+
 JobTrackr is a Next.js 16 + Prisma + PostgreSQL application for tracking job applications, interviews, companies, and activity timelines.
+
+## Features
+- **Job Tracking**: Manage applications with status (Applied, Interview, Offer, Rejected).
+- **Activity Heatmap**: Visualize application consistency with a GitHub-style contribution graph.
+- **Weekly Reports**: Receive email summaries including recent activity and job stats.
+- **Recent Activity Dashboard**: View your latest application updates directly on the profile.
+
 
 ## Production Readiness Verification
 

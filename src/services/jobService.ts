@@ -129,6 +129,15 @@ export const getJobStats = async (token?: string) => {
   }
 };
 
+export const getJobActivity = async (token?: string) => {
+  try {
+    const response = await api.get<ApiResponse<any>>('/stats/activity', getConfig(token));
+    return unwrap(response.data);
+  } catch (error) {
+    throw new Error(getApiError(error));
+  }
+};
+
 export const exportJobsCSV = async (token?: string) => {
   try {
     const response = await api.get('/jobs/export', getConfig(token, 'blob'));

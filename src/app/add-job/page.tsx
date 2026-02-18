@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { createJob } from '@/services/jobService';
+import { createJob, fetchCompanies, createCompany } from '@/services/jobService';
 import FormField from '@/components/FormField';
 import StatusDropdown from '@/components/StatusDropdown';
 import Button from '@/components/Button';
@@ -16,6 +16,12 @@ const AddJob = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Company Auto-complete state
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState({
     position: '',
@@ -24,6 +30,32 @@ const AddJob = () => {
     status: 'applied',
     notes: ''
   });
+
+  useEffect(() => {
+    const loadCompanies = async () => {
+      if (user?.token) {
+        try {
+          const data = await fetchCompanies(user.token);
+          setCompanies(data);
+        } catch (err) {
+          console.error('Failed to load companies', err);
+        }
+      }
+    };
+    loadCompanies();
+  }, [user]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [wrapperRef]);
 
   const allowedStatuses = ['applied', 'interview', 'offer', 'rejected'];
   const sanitize = (text: string) => text.replace(/<[^>]*>?/gm, '').trim();
@@ -37,8 +69,26 @@ const AddJob = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setFormErrors({ ...formErrors, [e.target.name]: '' }); // clear individual field error
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    setFormErrors({ ...formErrors, [name]: '' });
+
+    if (name === 'company') {
+      if (value.trim()) {
+        const filtered = companies.filter(c => 
+          c.name.toLowerCase().includes(value.toLowerCase())
+        );
+        setFilteredCompanies(filtered);
+        setShowSuggestions(true);
+      } else {
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  const selectCompany = (companyName: string) => {
+    setFormData(prev => ({ ...prev, company: companyName }));
+    setShowSuggestions(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,7 +98,20 @@ const AddJob = () => {
     if (Object.keys(errors).length > 0) return;
     setLoading(true);
     setError('');
+    
     try {
+      // Check if company exists, if not create it
+      const existingCompany = companies.find(c => c.name.toLowerCase() === formData.company.trim().toLowerCase());
+      if (!existingCompany) {
+        try {
+          await createCompany({ name: formData.company.trim() }, user?.token);
+          toast.success(`Company "${formData.company}" added to database.`);
+        } catch (companyErr) {
+          console.error('Failed to auto-create company', companyErr);
+          // Continue anyway, maybe it failed because it exists but we missed it or some other non-blocking reason
+        }
+      }
+
       const sanitizedData = {
         position: sanitize(formData.position),
         company: sanitize(formData.company),
@@ -85,17 +148,34 @@ const AddJob = () => {
         {formErrors.position && (
           <p className="text-red-500 text-sm -mt-4 mb-4">{formErrors.position}</p>
         )}
-        <FormField
-          label="Company"
-          type="text"
-          name="company"
-          value={formData.company}
-          handleChange={handleChange}
-          placeholder="Enter company name"
-        />
+        
+        <div className="relative" ref={wrapperRef}>
+            <FormField
+            label="Company"
+            type="text"
+            name="company"
+            value={formData.company}
+            handleChange={handleChange}
+            placeholder="Enter company name"
+            />
+            {showSuggestions && filteredCompanies.length > 0 && (
+                <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto mt-1">
+                    {filteredCompanies.map((company) => (
+                        <div
+                            key={company.id}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700"
+                            onClick={() => selectCompany(company.name)}
+                        >
+                            {company.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
         {formErrors.company && (
           <p className="text-red-500 text-sm -mt-4 mb-4">{formErrors.company}</p>
         )}
+
         <FormField
           label="Location"
           type="text"

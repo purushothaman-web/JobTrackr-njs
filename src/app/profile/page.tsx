@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
@@ -15,7 +16,7 @@ import {
   Legend,
 } from 'chart.js';
 import { Eye, EyeOff } from 'lucide-react';
-import { sendJobSummaryEmail, getJobStats } from '@/services/jobService';
+import { sendJobSummaryEmail, getJobStats, getJobActivity, fetchJobs } from '@/services/jobService';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
@@ -41,6 +42,8 @@ const ProfilePage = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [activityData, setActivityData] = useState<Record<string, number>>({});
+  const [recentJobs, setRecentJobs] = useState<any[]>([]); // New state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -59,9 +62,17 @@ const ProfilePage = () => {
         return;
       }
       try {
-        const [profileRes, statsRes] = await Promise.all([api.get('/auth/me'), getJobStats(user.token)]);
+        const [profileRes, statsRes, activityRes, recentRes] = await Promise.all([
+          api.get('/auth/me'),
+          getJobStats(user.token),
+          getJobActivity(user.token),
+          // Re-using fetchJobs service with limit=5 and sort=updatedAt desc
+          fetchJobs({ token: user.token, page: 1, limit: 5, sortBy: 'updatedAt', order: 'desc' })
+        ]);
         setProfile(profileRes.data.data);
         setStats(statsRes);
+        setActivityData(activityRes);
+        setRecentJobs(recentRes.jobs);
       } catch (err: any) {
         setError(err.response?.data?.error || err.message || 'Failed to load profile');
       } finally {
@@ -193,7 +204,7 @@ const ProfilePage = () => {
           <div className="flex items-center justify-between">
             <h2 className="section-title text-2xl">Job Performance</h2>
             <button className="btn-primary" onClick={handleSendWeeklyReport}>
-              Send Weekly Report
+              Send Full Report
             </button>
           </div>
           {loading ? (
@@ -201,10 +212,14 @@ const ProfilePage = () => {
           ) : (
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {statCards.map((item) => (
-                <div key={item.label} className="rounded-xl border border-slate-200 bg-white p-4">
+                <Link
+                  href={item.label === 'Total Jobs' ? '/jobs' : `/jobs?status=${item.label.toLowerCase()}`}
+                  key={item.label}
+                  className="block rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-300 hover:bg-slate-50"
+                >
                   <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
                   <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
-                </div>
+                </Link>
               ))}
             </div>
           )}
@@ -214,6 +229,113 @@ const ProfilePage = () => {
           <p className="mb-3 mt-1 text-sm text-slate-600">Status spread across your applications.</p>
           {loading ? <Loading /> : <Line data={chartData} options={chartOptions} />}
         </div>
+      </section>
+
+      <section className="card p-5 sm:p-6 overflow-hidden">
+        <h2 className="section-title text-2xl mb-4">Recent Activity</h2>
+        {loading ? (
+          <Loading />
+        ) : recentJobs.length === 0 ? (
+          <p className="text-slate-500 text-sm">No recent activity found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+             <table className="w-full text-left text-sm text-slate-600">
+               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                 <tr>
+                   <th className="px-4 py-3 font-semibold">Company</th>
+                   <th className="px-4 py-3 font-semibold">Position</th>
+                   <th className="px-4 py-3 font-semibold">Status</th>
+                   <th className="px-4 py-3 font-semibold">Date</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100">
+                 {recentJobs.map((job) => (
+                   <tr key={job.id} className="group hover:bg-slate-50 transition-colors">
+                     <td className="px-4 py-3 font-medium text-slate-900">
+                        {job.company}
+                     </td>
+                     <td className="px-4 py-3">{job.position}</td>
+                     <td className="px-4 py-3">
+                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium 
+                         ${job.status === 'offer' ? 'bg-emerald-100 text-emerald-700' : 
+                           job.status === 'rejected' ? 'bg-red-100 text-red-700' : 
+                           job.status === 'interview' ? 'bg-purple-100 text-purple-700' : 
+                           'bg-blue-100 text-blue-700'}`}>
+                         {job.status}
+                       </span>
+                     </td>
+                     <td className="px-4 py-3 text-slate-400">
+                       {new Date(job.updatedAt).toLocaleDateString()}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
+        )}
+      </section>
+
+      <section className="card p-5 sm:p-6">
+        <h2 className="section-title text-2xl">Activity Heatmap</h2>
+        <p className="mb-4 mt-1 text-sm text-slate-600">Your application consistency over the last year.</p>
+        
+        {loading ? (
+          <Loading />
+        ) : (
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[700px]">
+              <div className="flex gap-1 text-xs text-slate-400 mb-2">
+                {Array.from({ length: 12 }).map((_, i) => {
+                  const d = new Date();
+                  d.setMonth(d.getMonth() - (11 - i));
+                  return (
+                    <div key={i} className="flex-1">
+                      {d.toLocaleString('default', { month: 'short' })}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="grid grid-flow-col gap-[3px] grid-rows-7 h-[100px]">
+                {Array.from({ length: 371 }).map((_, i) => {
+                   const today = new Date();
+                   const dayOfWeek = today.getDay(); 
+                   const startDate = new Date(today);
+                   startDate.setDate(today.getDate() - 364 - dayOfWeek);
+                   
+                   const date = new Date(startDate);
+                   date.setDate(startDate.getDate() + i);
+                   
+                   const dateStr = date.toISOString().split('T')[0];
+                   const count = activityData[dateStr] || 0;
+                   
+                   let colorClass = 'bg-slate-100';
+                   if (count > 0) colorClass = 'bg-emerald-200';
+                   if (count > 1) colorClass = 'bg-emerald-400';
+                   if (count > 2) colorClass = 'bg-emerald-600';
+                   if (count > 3) colorClass = 'bg-emerald-800';
+                   if (date > today) return <div key={i} className="w-[10px] h-[10px]"></div>;
+
+                   return (
+                    <div
+                      key={i}
+                      title={`${dateStr}: ${count} applications`}
+                      className={`w-[10px] h-[10px] rounded-sm ${colorClass}`}
+                    ></div>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-2 mt-3 text-xs text-slate-500 justify-end">
+                <span>Less</span>
+                <div className="w-3 h-3 bg-slate-100 rounded-sm"></div>
+                <div className="w-3 h-3 bg-emerald-200 rounded-sm"></div>
+                <div className="w-3 h-3 bg-emerald-400 rounded-sm"></div>
+                <div className="w-3 h-3 bg-emerald-600 rounded-sm"></div>
+                <div className="w-3 h-3 bg-emerald-800 rounded-sm"></div>
+                <span>More</span>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       <Modal open={editMode} onClose={() => setEditMode(false)}>

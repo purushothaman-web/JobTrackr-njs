@@ -52,7 +52,7 @@ const Header = () => {
 
         <nav className="hidden items-center gap-2 sm:flex">
           {loading ? (
-            <span className="text-sm text-slate-500">Loading...</span>
+            null
           ) : user ? (
             <>
               {navItems.map((item) => (
