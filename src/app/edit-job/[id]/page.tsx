@@ -8,6 +8,7 @@ import FormField from '@/components/FormField';
 import StatusDropdown from '@/components/StatusDropdown';
 import Button from '@/components/Button';
 import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
 
 const EditJob = () => {
   const { id } = useParams();
@@ -49,9 +50,9 @@ const EditJob = () => {
   const sanitize = (text: string) => text.replace(/<[^>]*>?/gm, '').trim();
   const validate = () => {
     const errors: Record<string, string> = {};
-    if (!formData.position.trim()) errors.position = 'Position is required';
-    if (!formData.company.trim()) errors.company = 'Company is required';
-    if (!formData.location.trim()) errors.location = 'Location is required';
+    if (!formData.position.trim()) errors.position = 'Position required';
+    if (!formData.company.trim()) errors.company = 'Company required';
+    if (!formData.location.trim()) errors.location = 'Location required';
     if (!allowedStatuses.includes(formData.status)) errors.status = 'Invalid status';
     return errors;
   };
@@ -77,7 +78,7 @@ const EditJob = () => {
         notes: sanitize(formData.notes),
       };
       await updateJob(id as string, sanitizedData, user?.token);
-      toast.success('Job updated successfully!');
+      toast.success('Job Record Updated');
       router.push('/jobs');
     } catch (err: any) {
       setError(err.message || 'Failed to update job');
@@ -87,92 +88,126 @@ const EditJob = () => {
     }
   };
 
-  if (authLoading) return <p className="text-center mt-10">Loading authentication...</p>;
-  if (!user) return <p className="text-center mt-10">Please log in.</p>;
-  if (loading && !formData.position) return <p className="text-center mt-10">Loading job details...</p>; // Check formData to allow optimistic UI or ensure data loaded
+  if (authLoading) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-electric animate-pulse tracking-widest uppercase">Checking Auth_</div>
+    </div>
+  );
+  
+  if (!user) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-zinc-500 uppercase tracking-widest">Unauthorized Access</div>
+    </div>
+  );
+
+  if (loading && !formData.position) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-electric animate-pulse tracking-widest uppercase">Loading Record_</div>
+    </div>
+  );
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2">
-      <div className="w-full max-w-md sm:max-w-lg bg-white rounded-2xl shadow-xl p-4 sm:p-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#1E293B] mb-4 sm:mb-6 text-center">Edit Job Posting</h1>
+    <div className="flex flex-col items-center justify-center min-h-[85vh] py-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-xl p-8 bg-obsidian-light border border-border"
+      >
+        <div className="mb-10 border-b border-border pb-6">
+          <h1 className="font-heading text-4xl font-black text-offwhite tracking-tighter uppercase">
+            Edit Entry<span className="text-electric">.</span>
+          </h1>
+          <p className="font-mono text-zinc-500 text-xs tracking-widest uppercase mt-4">
+            Modify Application Data
+          </p>
+        </div>
 
         {error && (
-          <p className="mb-4 text-center text-red-500 font-semibold">{error}</p>
+          <div className="mb-6 p-3 border border-red-500/50 bg-red-500/10 text-red-500 font-mono text-xs text-center uppercase tracking-widest">
+            {error}
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-8">
+          <div>
             <FormField
-              label="Position"
+              label="Position Title"
               type="text"
               name="position"
               value={formData.position || ''}
               handleChange={handleChange}
-              placeholder="Enter position title"
+              placeholder="e.g. Frontend Engineer"
             />
             {formErrors.position && (
-              <p className="text-red-500 text-sm -mt-2 mb-2">{formErrors.position}</p>
+              <p className="text-red-500 font-mono text-[10px] uppercase tracking-wider mt-1">{formErrors.position}</p>
             )}
+          </div>
 
+          <div>
             <FormField
-              label="Company"
+              label="Company Name"
               type="text"
               name="company"
               value={formData.company || ''}
               handleChange={handleChange}
-              placeholder="Enter company name"
+              placeholder="e.g. Acme Corp"
             />
             {formErrors.company && (
-              <p className="text-red-500 text-sm -mt-2 mb-2">{formErrors.company}</p>
+              <p className="text-red-500 font-mono text-[10px] uppercase tracking-wider mt-1">{formErrors.company}</p>
             )}
+          </div>
 
+          <div>
             <FormField
               label="Location"
               type="text"
               name="location"
               value={formData.location || ''}
               handleChange={handleChange}
-              placeholder="Enter job location"
+              placeholder="e.g. Remote, NY"
             />
             {formErrors.location && (
-              <p className="text-red-500 text-sm -mt-2 mb-2">{formErrors.location}</p>
+              <p className="text-red-500 font-mono text-[10px] uppercase tracking-wider mt-1">{formErrors.location}</p>
             )}
+          </div>
 
-            <div>
-              <label
-                htmlFor="status"
-                className="block text-[#1E293B] font-semibold mb-2"
-              >
-                Status
-              </label>
-              <StatusDropdown
-                currentStatus={formData.status || 'applied'}
-                onChange={(e, value) => setFormData({ ...formData, status: value })}
-              />
-              {formErrors.status && <p className="text-red-500 text-sm -mt-2 mb-2">{formErrors.status}</p>}
-            </div>
+          <div>
+            <label htmlFor="status" className="font-mono text-xs text-zinc-500 block uppercase tracking-widest mb-3">
+              Application Status
+            </label>
+            <StatusDropdown
+              currentStatus={formData.status || 'applied'}
+              onChange={(e, value) => setFormData({ ...formData, status: value })}
+            />
+            {formErrors.status && <p className="text-red-500 font-mono text-[10px] uppercase tracking-wider mt-1">{formErrors.status}</p>}
+          </div>
 
-            <FormField
-              label="Notes"
-              type="textarea"
+          <div>
+             <label htmlFor="notes" className="font-mono text-xs text-zinc-500 block uppercase tracking-widest mb-3">
+              Additional Notes
+            </label>
+            <textarea
               name="notes"
+              id="notes"
               value={formData.notes || ''}
-              handleChange={handleChange} // FormField handles textarea appropriately
-              placeholder="Additional notes (optional)"
+              onChange={handleChange}
+              placeholder="Interview details, salary expectations, etc."
+              rows={4}
+              className="w-full bg-transparent border-b-2 border-border text-offwhite py-2 font-mono text-sm focus:border-electric focus:ring-0 outline-none transition-colors placeholder:text-zinc-700 resize-y"
             />
           </div>
 
-          <Button
-            type="submit"
-            text={loading ? 'Updating...' : 'Update Job'}
-            disabled={loading}
-            // className="w-full mt-6 sm:mt-8" // Button component doesn't accept className prop in my definition. I should add it or wrap it.
-            // My Button component implementation has fixed classes. I should wrap it in div or update Button.tsx.
-            // I'll wrap it in a div.
-          />
-           {/* Button doesn't accept className, so I'll wrap it */}
+          <div className="pt-6 border-t border-border">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? 'Processing...' : 'Update Record'}
+            </Button>
+          </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

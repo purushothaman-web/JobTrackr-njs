@@ -32,13 +32,22 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
     const verificationUrl = `${appUrl}/verify-email/${token}`;
     const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="color: #333;">Verify your email address</h2>
-        <p>Hello,</p>
-        <p>Please verify your email by clicking the button below:</p>
-        <p style="text-align: center;">
-          <a href="${verificationUrl}" style="background-color: #10B981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Verify Email</a>
+      <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: auto; padding: 30px; border: 2px solid #27272a; background-color: #0a0a0a; color: #fafafa;">
+        <h2 style="font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin-bottom: 20px; font-size: 24px; color: #fafafa;">SYS_INIT<span style="color: #a3e635;">.</span></h2>
+        <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #a1a1aa; border-bottom: 1px solid #27272a; padding-bottom: 10px; margin-bottom: 20px;">
+          Identity Sync Sequence
         </p>
+        <p style="font-size: 14px; margin-bottom: 20px; line-height: 1.5;">Subject identity unverified. Click the execution link below to synchronize your comms channel with the mainframe.</p>
+        <div style="margin: 30px 0;">
+          <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; font-size: 14px; color: #0a0a0a; background-color: #a3e635; text-decoration: none; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border: 1px solid #a3e635;">
+            [ SYNCHRONIZE ]
+          </a>
+        </div>
+        <p style="font-size: 12px; color: #71717a; line-height: 1.5;">If this request is unrecognized, abort action and purge this transmission.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed #27272a; font-size: 10px; color: #52525b; word-break: break-all;">
+          MANUAL OVERRIDE LINK:<br/>
+          <a href="${verificationUrl}" style="color: #a3e635; text-decoration: none;">${verificationUrl}</a>
+        </div>
       </div>
     `;
 

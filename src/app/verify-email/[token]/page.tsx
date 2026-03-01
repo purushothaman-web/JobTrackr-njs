@@ -4,6 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import Link from 'next/link';
+import { Button } from '@/components/Button';
+import { motion } from 'framer-motion';
 
 const VerifyEmail = () => {
   const params = useParams();
@@ -11,33 +13,33 @@ const VerifyEmail = () => {
   const router = useRouter();
   const [status, setStatus] = useState(() =>
     token
-      ? { loading: true, success: false, message: '' }
-      : { loading: false, success: false, message: 'Invalid or missing verification token.' }
+      ? { loading: true, success: false, message: 'Initiating handshake...' }
+      : { loading: false, success: false, message: 'ERR_MISSING_TOKEN' }
   );
 
   const verifyRef = useRef(false);
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     if (verifyRef.current) return;
     verifyRef.current = true;
 
     const verify = async () => {
       try {
+         // Add artificial delay for aesthetic feel
+        await new Promise(r => setTimeout(r, 1500));
         const response = await api.get(`/auth/verify-email/${token}`);
-        setStatus({ loading: false, success: true, message: response.data.data.message });
+        setStatus({ loading: false, success: true, message: response.data?.data?.message || 'Handshake Accpeted.' });
 
         setTimeout(() => {
-          router.push('/'); // Redirect to login
+          router.push('/');
         }, 3000);
       } catch (err: any) {
         setStatus({
           loading: false,
           success: false,
-          message: err.response?.data?.error || 'Verification failed.',
+          message: err.response?.data?.error || 'Verification Failed: Origin Unknown.',
         });
       }
     };
@@ -46,66 +48,53 @@ const VerifyEmail = () => {
   }, [token, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
-        <h1 className="text-3xl font-bold mb-6 text-[#1E293B]">Email Verification</h1>
-
-        {status.loading && (
-          <p className="text-blue-600 flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin h-5 w-5 text-blue-600"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              ></path>
-            </svg>
-            Verifying your email...
+    <div className="flex min-h-[85vh] items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md bg-obsidian-light border border-border p-8 text-center"
+      >
+        <div className="mb-8 border-b border-border pb-4">
+          <h1 className="font-heading text-3xl font-black text-offwhite uppercase tracking-tighter">
+            Comms_Link<span className="text-electric">.</span>
+          </h1>
+          <p className="mt-2 font-mono text-[10px] text-zinc-500 uppercase tracking-widest">
+            Network Confirmation Protocol
           </p>
-        )}
+        </div>
 
-        {!status.loading && (
-          <p className={`text-lg font-semibold ${status.success ? 'text-green-600' : 'text-red-600'} mb-2`}>
-            {status.message}
-          </p>
-        )}
-
-        {!status.loading && status.success && (
-          <p className="text-sm text-gray-500 mt-2">Redirecting to login...</p>
-        )}
-
-        {!status.loading && !status.success && (
-          <div className="mt-6 flex flex-col items-center gap-3">
-             {/* Retry logic might need page reload or just re-trigger, but usually token invalid means invalid 
-                 so simple reload might not help if token is consumed or bad. 
-                 But original code had reload. */}
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition"
-            >
-              Retry
-            </button>
-            <Link
-              href="/"
-              className="inline-block text-blue-600 hover:underline font-semibold"
-            >
-              Go to Login
-            </Link>
+        {status.loading ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <div className="w-8 h-8 border-2 border-border border-t-electric rounded-full animate-spin"></div>
+            <p className="font-mono text-electric animate-pulse tracking-widest uppercase text-xs">
+              {status.message}
+            </p>
+          </div>
+        ) : (
+          <div className="py-6">
+            <p className={`font-mono text-sm uppercase tracking-widest mb-6 ${status.success ? 'text-electric' : 'text-red-500'}`}>
+               {status.success ? 'SYS_OK: ' : 'CRITICAL: '} {status.message}
+            </p>
+            
+            {status.success ? (
+               <p className="font-mono text-zinc-500 text-[10px] uppercase tracking-widest animate-pulse">
+                 Redirecting to gateway...
+               </p>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                 <Button onClick={() => window.location.reload()} className="w-full sm:w-auto">
+                   Retry Signal
+                 </Button>
+                 <Link href="/" className="w-full sm:w-auto">
+                   <Button variant="ghost" className="w-full border border-border text-zinc-400 hover:text-offwhite">
+                     Abort Sequence
+                   </Button>
+                 </Link>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

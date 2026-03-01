@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { api } from '@/lib/api';
 import { Line } from 'react-chartjs-2';
@@ -15,21 +14,40 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Eye, EyeOff } from 'lucide-react';
 import { sendJobSummaryEmail, getJobStats, getJobActivity, fetchJobs } from '@/services/jobService';
+import FormField from '@/components/FormField';
+import { Button } from '@/components/Button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
+
+const EyeSVG = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+);
+
+const EyeOffSVG = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+);
 
 const Modal = ({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) => {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="card relative w-full max-w-md p-6">
-        <button className="absolute right-3 top-2 text-2xl text-slate-500" onClick={onClose} aria-label="Close">
-          &times;
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-obsidian/80 backdrop-blur-sm p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative w-full max-w-md bg-obsidian-light border border-border p-8"
+      >
+        <button 
+           className="absolute right-4 top-4 text-zinc-500 hover:text-offwhite transition-colors" 
+           onClick={onClose} 
+           aria-label="Close"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
         {children}
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -43,7 +61,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
   const [activityData, setActivityData] = useState<Record<string, number>>({});
-  const [recentJobs, setRecentJobs] = useState<any[]>([]); // New state
+  const [recentJobs, setRecentJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -66,7 +84,6 @@ const ProfilePage = () => {
           api.get('/auth/me'),
           getJobStats(user.token),
           getJobActivity(user.token),
-          // Re-using fetchJobs service with limit=5 and sort=updatedAt desc
           fetchJobs({ token: user.token, page: 1, limit: 5, sortBy: 'updatedAt', order: 'desc' })
         ]);
         setProfile(profileRes.data.data);
@@ -142,9 +159,14 @@ const ProfilePage = () => {
       {
         label: 'Count',
         data: [stats?.stats?.applied || 0, stats?.stats?.interview || 0, stats?.stats?.offer || 0, stats?.stats?.rejected || 0],
-        borderColor: '#0f766e',
-        backgroundColor: 'rgba(15,118,110,0.08)',
-        tension: 0.35,
+        borderColor: '#a3e635', // Electric lime
+        backgroundColor: 'rgba(163, 230, 53, 0.1)',
+        borderWidth: 2,
+        pointBackgroundColor: '#a3e635',
+        pointBorderColor: '#0a0a0a',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0, // Sharp lines for brutalist feel
         fill: true,
       },
     ],
@@ -152,119 +174,167 @@ const ProfilePage = () => {
 
   const chartOptions = {
     responsive: true,
-    plugins: { legend: { display: false } },
+    plugins: { 
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#0a0a0a',
+        titleFont: { family: 'JetBrains Mono', size: 10 },
+        bodyFont: { family: 'JetBrains Mono', size: 12 },
+        borderColor: '#27272a',
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 0,
+        displayColors: false,
+      }
+    },
     scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 } },
+      y: { 
+        beginAtZero: true, 
+        ticks: { stepSize: 1, font: { family: 'JetBrains Mono', size: 10 }, color: '#71717a' },
+        grid: { color: '#27272a' },
+        border: { dash: [4, 4] }
+      },
+      x: {
+        ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#71717a' },
+        grid: { display: false }
+      }
     },
   };
 
-  if (!user) return <div className="p-6 text-center">Please log in.</div>;
+  if (!user) return (
+     <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-zinc-500 uppercase tracking-widest">Unauthorized Access</div>
+    </div>
+  );
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
-      <section className="card p-5 sm:p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="mx-auto w-full max-w-7xl space-y-6 py-8">
+      {/* Header Section */}
+      <section className="bg-obsidian-light border border-border p-6 sm:p-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>
-            <h1 className="section-title text-3xl">Profile</h1>
-            <p className="mt-1 text-sm text-slate-600">Manage account details and track your job performance.</p>
+            <h1 className="font-heading text-4xl font-black text-offwhite tracking-tighter uppercase">
+              Operative_Profile<span className="text-electric">.</span>
+            </h1>
+            <p className="font-mono text-zinc-500 text-[10px] tracking-widest uppercase mt-2">
+              Account telemetry & performance data
+            </p>
           </div>
-          <button className="btn-secondary" onClick={() => setEditMode(true)}>
-            Edit Profile
-          </button>
+          <Button variant="secondary" onClick={() => setEditMode(true)}>
+            Configure
+          </Button>
         </div>
+        
         {loading ? (
-          <Loading />
+          <div className="mt-8 p-12 border border-border border-dashed flex items-center justify-center">
+             <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Fetching Telemetry_</div>
+          </div>
         ) : (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
-              <p className="mt-1 font-semibold text-slate-900">{profile?.name}</p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <div className="border border-border/50 bg-obsidian p-5 flex flex-col gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Designation</p>
+              <p className="font-heading font-bold text-xl text-offwhite">{profile?.name}</p>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Email</p>
-              <p className="mt-1 font-semibold text-slate-900">{profile?.email}</p>
+            <div className="border border-border/50 bg-obsidian p-5 flex flex-col gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500">Comms Link (Email)</p>
+              <p className="font-mono text-electric text-sm tracking-wide">{profile?.email}</p>
             </div>
           </div>
         )}
+        
         {!loading && !user?.emailVerified && !profile?.emailVerified && (
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p className="text-sm font-semibold text-amber-900">Your email is not verified.</p>
-            <button className="btn-secondary mt-3" onClick={handleResendVerification} disabled={resendLoading}>
-              {resendLoading ? 'Sending...' : 'Resend Verification Email'}
-            </button>
+          <div className="mt-6 border border-amber-500/50 bg-amber-500/10 p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="font-mono text-xs uppercase tracking-widest text-amber-500">Warning: Comms Link Unverified</p>
+            <Button variant="ghost" className="border border-amber-500/50 text-amber-500 hover:bg-amber-500/20 text-xs" onClick={handleResendVerification} disabled={resendLoading}>
+              {resendLoading ? 'Transmitting...' : 'Resend Ping'}
+            </Button>
           </div>
         )}
       </section>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {message && <p className="text-sm text-emerald-700">{message}</p>}
+      {error && <div className="p-3 border border-red-500/50 bg-red-500/10 text-red-500 font-mono text-xs uppercase tracking-widest">ERR: {error}</div>}
+      {message && <div className="p-3 border border-electric/50 bg-electric/10 text-electric font-mono text-xs uppercase tracking-widest">MSG: {message}</div>}
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <div className="card p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="section-title text-2xl">Job Performance</h2>
-            <button className="btn-primary" onClick={handleSendWeeklyReport}>
-              Send Full Report
-            </button>
+        <div className="bg-obsidian-light border border-border p-6 sm:p-8 flex flex-col">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-border">
+            <h2 className="font-heading text-2xl font-black text-offwhite uppercase tracking-tight">System_Metrics</h2>
+            <Button variant="ghost" className="border border-border text-zinc-400 hover:text-electric text-xs" onClick={handleSendWeeklyReport}>
+              Dispatch Report
+            </Button>
           </div>
+          
           {loading ? (
-            <Loading />
+             <div className="flex-1 min-h-[200px] border border-border border-dashed flex items-center justify-center">
+               <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Aggregating_</div>
+            </div>
           ) : (
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {statCards.map((item) => (
                 <Link
                   href={item.label === 'Total Jobs' ? '/jobs' : `/jobs?status=${item.label.toLowerCase()}`}
                   key={item.label}
-                  className="block rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-indigo-300 hover:bg-slate-50"
+                  className="group block border border-border bg-obsidian p-4 transition-colors hover:border-electric relative overflow-hidden flex flex-col justify-between min-h-[100px]"
                 >
-                  <p className="text-xs uppercase tracking-wide text-slate-500">{item.label}</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
+                  <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-400 transition-colors">{item.label}</p>
+                  <p className="font-heading text-3xl font-black text-offwhite group-hover:text-electric transition-colors">{item.value}</p>
                 </Link>
               ))}
             </div>
           )}
         </div>
-        <div className="card p-5 sm:p-6">
-          <h2 className="section-title text-2xl">Trend</h2>
-          <p className="mb-3 mt-1 text-sm text-slate-600">Status spread across your applications.</p>
-          {loading ? <Loading /> : <Line data={chartData} options={chartOptions} />}
+        
+        <div className="bg-obsidian-light border border-border p-6 sm:p-8 flex flex-col">
+          <div className="mb-6 pb-4 border-b border-border">
+             <h2 className="font-heading text-2xl font-black text-offwhite uppercase tracking-tight">Status_Vector</h2>
+             <p className="font-mono text-[10px] text-zinc-500 tracking-widest uppercase mt-1">Application flow distribution.</p>
+          </div>
+          
+          <div className="flex-1 flex items-center justify-center w-full min-h-[200px]">
+             {loading ? <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-xs">Plotting_</div> : <div className="w-full relative h-[220px]"><Line data={chartData} options={chartOptions} /></div>}
+          </div>
         </div>
       </section>
 
-      <section className="card p-5 sm:p-6 overflow-hidden">
-        <h2 className="section-title text-2xl mb-4">Recent Activity</h2>
+      <section className="bg-obsidian-light border border-border p-6 sm:p-8 overflow-hidden">
+        <div className="mb-6 pb-4 border-b border-border">
+          <h2 className="font-heading text-2xl font-black text-offwhite uppercase tracking-tight">Recent_Log</h2>
+        </div>
+        
         {loading ? (
-          <Loading />
+           <div className="p-12 border border-border border-dashed flex items-center justify-center">
+               <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Syncing_</div>
+            </div>
         ) : recentJobs.length === 0 ? (
-          <p className="text-slate-500 text-sm">No recent activity found.</p>
+          <div className="p-12 border border-border border-dashed flex justify-center text-center">
+            <p className="font-mono text-zinc-500 text-xs uppercase tracking-widest">Log is empty.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
-             <table className="w-full text-left text-sm text-slate-600">
-               <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+             <table className="w-full text-left font-mono text-[10px] sm:text-xs">
+               <thead className="border-b border-border text-zinc-500 uppercase tracking-widest">
                  <tr>
-                   <th className="px-4 py-3 font-semibold">Company</th>
-                   <th className="px-4 py-3 font-semibold">Position</th>
-                   <th className="px-4 py-3 font-semibold">Status</th>
-                   <th className="px-4 py-3 font-semibold">Date</th>
+                   <th className="px-4 py-3 font-normal">Entity</th>
+                   <th className="px-4 py-3 font-normal">Designation</th>
+                   <th className="px-4 py-3 font-normal text-right">Status</th>
+                   <th className="px-4 py-3 font-normal text-right">Timestamp</th>
                  </tr>
                </thead>
-               <tbody className="divide-y divide-slate-100">
+               <tbody className="divide-y divide-border/50 uppercase">
                  {recentJobs.map((job) => (
-                   <tr key={job.id} className="group hover:bg-slate-50 transition-colors">
-                     <td className="px-4 py-3 font-medium text-slate-900">
-                        {job.company}
-                     </td>
-                     <td className="px-4 py-3">{job.position}</td>
-                     <td className="px-4 py-3">
-                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium 
-                         ${job.status === 'offer' ? 'bg-emerald-100 text-emerald-700' : 
-                           job.status === 'rejected' ? 'bg-red-100 text-red-700' : 
-                           job.status === 'interview' ? 'bg-purple-100 text-purple-700' : 
-                           'bg-blue-100 text-blue-700'}`}>
+                   <tr key={job.id} className="group hover:bg-obsidian transition-colors text-zinc-300">
+                     <td className="px-4 py-4 truncate max-w-[120px] text-offwhite">{job.company}</td>
+                     <td className="px-4 py-4 truncate max-w-[150px]">{job.position}</td>
+                     <td className="px-4 py-4 text-right">
+                       <span className={`inline-flex items-center border px-2 py-0.5
+                         ${job.status === 'offer' ? 'border-electric text-electric bg-electric/10' : 
+                           job.status === 'rejected' ? 'border-red-500 text-red-500 bg-red-500/10' : 
+                           job.status === 'interview' ? 'border-purple-500 text-purple-500 bg-purple-500/10' : 
+                           'border-blue-500 text-blue-500 bg-blue-500/10'}`}>
                          {job.status}
                        </span>
                      </td>
-                     <td className="px-4 py-3 text-slate-400">
+                     <td className="px-4 py-4 text-right text-zinc-500">
                        {new Date(job.updatedAt).toLocaleDateString()}
                      </td>
                    </tr>
@@ -275,16 +345,20 @@ const ProfilePage = () => {
         )}
       </section>
 
-      <section className="card p-5 sm:p-6">
-        <h2 className="section-title text-2xl">Activity Heatmap</h2>
-        <p className="mb-4 mt-1 text-sm text-slate-600">Your application consistency over the last year.</p>
+      <section className="bg-obsidian border border-border p-6 sm:p-8">
+        <div className="mb-6 pb-4 border-b border-border/50">
+           <h2 className="font-heading text-2xl font-black text-offwhite uppercase tracking-tight">Activity_Heatmap</h2>
+           <p className="font-mono text-[10px] text-zinc-500 tracking-widest uppercase mt-1">Application consistency matrix (T-365d).</p>
+        </div>
         
         {loading ? (
-          <Loading />
+          <div className="p-12 border border-border border-dashed flex items-center justify-center">
+             <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Rendering Matrix_</div>
+          </div>
         ) : (
-          <div className="w-full overflow-x-auto">
+          <div className="w-full overflow-x-auto custom-scrollbar pb-2">
             <div className="min-w-[700px]">
-              <div className="flex gap-1 text-xs text-slate-400 mb-2">
+              <div className="flex gap-1 text-[10px] font-mono uppercase tracking-widest text-zinc-600 mb-3 border-b border-border/20 pb-2">
                 {Array.from({ length: 12 }).map((_, i) => {
                   const d = new Date();
                   d.setMonth(d.getMonth() - (11 - i));
@@ -295,7 +369,7 @@ const ProfilePage = () => {
                   );
                 })}
               </div>
-              <div className="grid grid-flow-col gap-[3px] grid-rows-7 h-[100px]">
+              <div className="grid grid-flow-col gap-1 grid-rows-7 h-auto">
                 {Array.from({ length: 371 }).map((_, i) => {
                    const today = new Date();
                    const dayOfWeek = today.getDay(); 
@@ -308,104 +382,111 @@ const ProfilePage = () => {
                    const dateStr = date.toISOString().split('T')[0];
                    const count = activityData[dateStr] || 0;
                    
-                   let colorClass = 'bg-slate-100';
-                   if (count > 0) colorClass = 'bg-emerald-200';
-                   if (count > 1) colorClass = 'bg-emerald-400';
-                   if (count > 2) colorClass = 'bg-emerald-600';
-                   if (count > 3) colorClass = 'bg-emerald-800';
-                   if (date > today) return <div key={i} className="w-[10px] h-[10px]"></div>;
+                   let colorClass = 'bg-obsidian-light border border-border/50';
+                   if (count > 0) colorClass = 'bg-[#1a3a14] border-[#224f19]';
+                   if (count > 1) colorClass = 'bg-[#29781b] border-[#369624]';
+                   if (count > 2) colorClass = 'bg-[#50c83a] border-[#5ee445]';
+                   if (count > 3) colorClass = 'bg-electric border-[#b8ff4b] shadow-[0_0_8px_rgba(163,230,53,0.5)]';
+                   if (date > today) return <div key={i} className="w-3 h-3 bg-transparent"></div>;
 
                    return (
                     <div
                       key={i}
-                      title={`${dateStr}: ${count} applications`}
-                      className={`w-[10px] h-[10px] rounded-sm ${colorClass}`}
+                      title={`${dateStr}: ${count} op(s)`}
+                      className={`w-3 h-3 ${colorClass} transition-colors hover:border-offwhite cursor-crosshair`}
                     ></div>
                   );
                 })}
               </div>
-              <div className="flex items-center gap-2 mt-3 text-xs text-slate-500 justify-end">
-                <span>Less</span>
-                <div className="w-3 h-3 bg-slate-100 rounded-sm"></div>
-                <div className="w-3 h-3 bg-emerald-200 rounded-sm"></div>
-                <div className="w-3 h-3 bg-emerald-400 rounded-sm"></div>
-                <div className="w-3 h-3 bg-emerald-600 rounded-sm"></div>
-                <div className="w-3 h-3 bg-emerald-800 rounded-sm"></div>
-                <span>More</span>
+              <div className="flex items-center gap-2 mt-4 font-mono text-[10px] uppercase text-zinc-500 justify-end">
+                <span>Min</span>
+                <div className="w-3 h-3 bg-obsidian-light border border-border/50"></div>
+                <div className="w-3 h-3 bg-[#1a3a14] border-[#224f19]"></div>
+                <div className="w-3 h-3 bg-[#29781b] border-[#369624]"></div>
+                <div className="w-3 h-3 bg-[#50c83a] border-[#5ee445]"></div>
+                <div className="w-3 h-3 bg-electric border-[#b8ff4b]"></div>
+                <span>Max</span>
               </div>
             </div>
           </div>
         )}
       </section>
 
-      <Modal open={editMode} onClose={() => setEditMode(false)}>
-        <h2 className="section-title text-2xl">Edit Profile</h2>
-        <form onSubmit={handleProfileUpdate} className="mt-4 space-y-3">
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2"
-            placeholder="Name"
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2"
-            placeholder="Email"
-            required
-          />
-          <div className="relative">
-            <input
-              type={showNewPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10"
-              placeholder="New password (optional)"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNewPassword(!showNewPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-          {formData.password && (
-            <div className="relative">
-              <input
-                type={showCurrentPassword ? "text" : "password"}
-                name="currentPassword"
-                value={formData.currentPassword}
-                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 pr-10"
-                placeholder="Current password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+      <AnimatePresence>
+        {editMode && (
+          <Modal open={editMode} onClose={() => setEditMode(false)}>
+            <div className="mb-8 border-b border-border pb-4">
+               <h2 className="font-heading text-2xl font-black text-offwhite uppercase tracking-tight">Modify_Config<span className="text-electric">.</span></h2>
             </div>
-          )}
-          <div className="flex gap-2 pt-2">
-            <button type="submit" className="btn-primary flex-1" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button type="button" className="btn-secondary" onClick={() => setEditMode(false)}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </Modal>
+            
+            <form onSubmit={handleProfileUpdate} className="space-y-6">
+              <FormField
+                label="Designation"
+                type="text"
+                name="name"
+                value={formData.name}
+                handleChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Name"
+              />
+              <FormField
+                label="Comms Link"
+                type="email"
+                name="email"
+                value={formData.email}
+                handleChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Email"
+              />
+              
+              <div className="relative">
+                 <FormField
+                  label="New Passcode (Opt)"
+                  type={showNewPassword ? "text" : "password"}
+                  name="password"
+                  value={formData.password}
+                  handleChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Leave empty to maintain"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-8 text-zinc-500 hover:text-electric transition-colors"
+                >
+                  {showNewPassword ? <EyeOffSVG /> : <EyeSVG />}
+                </button>
+              </div>
+              
+              {formData.password && (
+                <div className="relative">
+                   <FormField
+                    label="Current Passcode"
+                    type={showCurrentPassword ? "text" : "password"}
+                    name="currentPassword"
+                    value={formData.currentPassword}
+                    handleChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                    placeholder="Required for modification"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-8 text-zinc-500 hover:text-electric transition-colors"
+                  >
+                    {showCurrentPassword ? <EyeOffSVG /> : <EyeSVG />}
+                  </button>
+                </div>
+              )}
+              
+              <div className="flex flex-col gap-3 pt-4 border-t border-border">
+                <Button type="submit" className="w-full" disabled={saving}>
+                  {saving ? 'Processing...' : 'Commit Changes'}
+                </Button>
+                <Button type="button" variant="ghost" className="w-full border border-border text-zinc-400 hover:text-offwhite" onClick={() => setEditMode(false)}>
+                  Abort
+                </Button>
+              </div>
+            </form>
+          </Modal>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

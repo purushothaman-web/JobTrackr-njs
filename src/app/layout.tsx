@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
+import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/Providers';
 import Header from '@/components/Header';
+
+const fontHeading = Space_Grotesk({ subsets: ['latin'], variable: '--font-heading' });
+const fontBody = Inter({ subsets: ['latin'], variable: '--font-body' });
+const fontMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.FRONTEND_URL || 'http://localhost:3000'),
@@ -52,15 +57,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${fontHeading.variable} ${fontBody.variable} ${fontMono.variable} dark`}>
+      <body className="antialiased font-body bg-obsidian text-offwhite min-h-screen flex flex-col selection:bg-electric selection:text-obsidian">
         <Providers>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow page-shell">
-              {children}
-            </main>
-          </div>
+          <Header />
+          <main className="flex-grow page-shell pt-32 pb-16">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

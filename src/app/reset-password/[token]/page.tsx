@@ -3,6 +3,9 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import FormField from '@/components/FormField';
+import { Button } from '@/components/Button';
+import { motion } from 'framer-motion';
 
 const ResetPassword = () => {
   const params = useParams();
@@ -16,24 +19,12 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    if (password !== confirmPassword) {
-      return 'Passwords do not match.';
-    }
-    if (password.length < 8) {
-      return 'Password must be at least 8 characters.';
-    }
-    if (!/[A-Z]/.test(password)) {
-      return 'Password must contain an uppercase letter.';
-    }
-    if (!/[a-z]/.test(password)) {
-      return 'Password must contain a lowercase letter.';
-    }
-    if (!/[0-9]/.test(password)) {
-      return 'Password must contain a number.';
-    }
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      return 'Password must contain a special character.';
-    }
+    if (password !== confirmPassword) return 'Passwords do not match.';
+    if (password.length < 8) return 'Password must be at least 8 characters.';
+    if (!/[A-Z]/.test(password)) return 'Password must contain an uppercase letter.';
+    if (!/[a-z]/.test(password)) return 'Password must contain a lowercase letter.';
+    if (!/[0-9]/.test(password)) return 'Password must contain a number.';
+    if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain a special character.';
     return '';
   };
 
@@ -71,65 +62,57 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
-        <h1 className="text-3xl font-bold mb-8 text-center text-[#1E293B]">Reset Password</h1>
+    <div className="flex min-h-[85vh] items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-obsidian border border-border p-8"
+      >
+        <div className="mb-8 border-b border-border pb-4">
+          <h1 className="font-heading text-3xl font-black text-offwhite uppercase tracking-tighter">
+            System_Override<span className="text-electric">.</span>
+          </h1>
+          <p className="mt-2 font-mono text-[10px] text-zinc-500 uppercase tracking-widest">
+            Authentication Module / Reset Cipher
+          </p>
+        </div>
 
         {message && (
-          <p role="alert" className="mb-4 text-center text-green-600 bg-green-100 p-3 rounded-xl border border-green-300 font-semibold">
-            {message}
-          </p>
+          <div className="mb-6 p-3 border border-electric/50 bg-electric/10 text-electric font-mono text-xs uppercase tracking-widest">
+            MSG: {message}
+          </div>
         )}
+        
         {error && (
-          <p role="alert" className="mb-4 text-center text-red-600 bg-red-100 p-3 rounded-xl border border-red-300 font-semibold">
-            {error}
-          </p>
+          <div className="mb-6 p-3 border border-red-500/50 bg-red-500/10 text-red-500 font-mono text-xs uppercase tracking-widest">
+            ERR: {error}
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-gray-50 shadow rounded-xl p-6">
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-gray-700 font-semibold mb-2">
-              New Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Enter new password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <FormField
+            label="New Passcode"
+            name="password"
+            type="password"
+            placeholder="Enter new cipher"
+            value={password}
+            handleChange={(e) => setPassword(e.target.value)}
+          />
 
-          <div className="mb-8">
-            <label htmlFor="confirmPassword" className="block text-gray-700 font-semibold mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Confirm new password"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+          <FormField
+            label="Confirm Passcode"
+            name="confirmPassword"
+            type="password"
+            placeholder="Re-enter cipher"
+            value={confirmPassword}
+            handleChange={(e) => setConfirmPassword(e.target.value)}
+          />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition"
-          >
-            {loading ? 'Resetting...' : 'Reset Password'}
-          </button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Reconfiguring...' : 'Execute Override'}
+          </Button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };

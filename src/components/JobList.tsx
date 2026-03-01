@@ -2,29 +2,43 @@
 
 import React from 'react';
 import JobCard from './JobCard';
+import { motion } from 'framer-motion';
 
 interface JobListProps {
   jobs: any[];
   onStatusUpdated?: () => void;
 }
 
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
 const JobList: React.FC<JobListProps> = ({ jobs, onStatusUpdated }) => {
   if (!Array.isArray(jobs) || jobs.length === 0) {
     return (
-      <p className="text-center text-[#64748B] mt-10">
-        No jobs found. Please add some jobs to get started.
-      </p>
+      <div className="flex items-center justify-center p-12 border border-dashed border-border mt-10">
+        <p className="font-mono text-zinc-500 uppercase tracking-widest text-sm">
+          No jobs tracked yet.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {jobs.map((job) => (
-          <JobCard key={job.id} job={job} onStatusUpdated={onStatusUpdated} />
-        ))}
-      </div>
-    </div>
+    <motion.div 
+      variants={listVariants}
+      initial="hidden"
+      animate="visible"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {jobs.map((job) => (
+        <JobCard key={job.id} job={job} onStatusUpdated={onStatusUpdated} />
+      ))}
+    </motion.div>
   );
 };
 

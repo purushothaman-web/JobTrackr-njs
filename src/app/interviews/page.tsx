@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Loading from '@/components/Loading';
 import { useAuth } from '@/context/AuthContext';
 import { deleteInterview, fetchAllInterviews, updateInterview } from '@/services/jobService';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const InterviewsPage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -62,7 +62,7 @@ const InterviewsPage = () => {
 
   const removeInterview = async (id: number) => {
     if (!user) return;
-    if (!window.confirm('Delete this interview?')) return;
+    if (!window.confirm('Initiate interview record deletion?')) return;
     try {
       await deleteInterview(id, user.token);
       await loadInterviews();
@@ -71,92 +71,172 @@ const InterviewsPage = () => {
     }
   };
 
-  const renderInterview = (interview: any) => (
-    <div key={interview.id} className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+  const renderInterview = (interview: any, index: number) => (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      key={interview.id} 
+      className="group relative border border-border bg-obsidian p-5 hover:border-electric transition-colors overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 p-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <button 
+          className="text-zinc-500 hover:text-red-500 transition-colors bg-obsidian border border-border" 
+          onClick={() => removeInterview(interview.id)}
+          title="Delete"
+        >
+          <svg className="w-5 h-5 p-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
-          <p className="font-semibold text-slate-900">{interview.job.position}</p>
-          <p className="text-sm text-slate-600">{interview.job.company}</p>
-          <p className="mt-1 text-sm text-slate-700">
-            {new Date(interview.scheduledAt).toLocaleString()}
+          <h3 className="font-heading font-bold text-xl text-offwhite uppercase tracking-tight mb-1 pr-12">
+            {interview.job.position}
+          </h3>
+          <p className="font-mono text-xs uppercase tracking-widest text-electric mb-4">
+            {interview.job.company}
           </p>
-          <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">
-            {interview.mode || 'Mode N/A'} · {interview.round || 'Round N/A'} · {interview.status}
-          </p>
+          
+          <div className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+            <div className="flex border-b border-border/50 pb-1">
+              <span className="w-24">Date/Time</span>
+              <span className="text-zinc-300">{new Date(interview.scheduledAt).toLocaleString()}</span>
+            </div>
+            <div className="flex border-b border-border/50 pb-1">
+              <span className="w-24">Type</span>
+              <span className="text-zinc-300">{interview.mode || 'N/A'} · {interview.round || 'N/A'}</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="rounded-lg border border-slate-300 px-2 py-1 text-sm"
-            value={interview.status}
-            onChange={(e) => quickStatusUpdate(interview.id, e.target.value)}
-          >
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <button
-            className="rounded-lg border border-red-200 px-3 py-1 text-sm font-semibold text-red-700"
-            onClick={() => removeInterview(interview.id)}
-          >
-            Delete
-          </button>
+
+        <div className="flex flex-col justify-end mt-4 sm:mt-0 sm:items-end w-full sm:w-auto">
+          <label className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1 sm:text-right block">Update Status</label>
+          <div className="relative w-full sm:w-40">
+             <select
+                className="w-full appearance-none bg-obsidian-light border border-border text-xs font-mono text-offwhite py-2 pl-3 pr-8 focus:outline-none focus:border-electric transition-colors uppercase cursor-pointer"
+                value={interview.status}
+                onChange={(e) => quickStatusUpdate(interview.id, e.target.value)}
+              >
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-electric">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+          </div>
         </div>
       </div>
-      {interview.notes && <p className="mt-2 text-sm text-slate-600">{interview.notes}</p>}
+      
+      {interview.notes && (
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1">Briefing Notes</p>
+          <p className="text-sm font-mono text-zinc-300">{interview.notes}</p>
+        </div>
+      )}
+    </motion.div>
+  );
+
+  if (authLoading) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-electric animate-pulse tracking-widest uppercase">Checking Auth_</div>
+    </div>
+  );
+  
+  if (!user) return (
+    <div className="flex h-[60vh] items-center justify-center">
+      <div className="font-mono text-zinc-500 uppercase tracking-widest">Unauthorized Access</div>
     </div>
   );
 
-  if (authLoading) return <Loading fullHeight message="Checking authentication..." />;
-  if (!user) return <p className="p-6">Please log in to view interviews.</p>;
-
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6">
-      <section className="card p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="section-title text-2xl">Interviews</h1>
-            <p className="text-sm text-slate-600">Track all your interviews in one place.</p>
-          </div>
-          <select
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">All statuses</option>
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+    <div className="mx-auto w-full max-w-7xl py-8 space-y-6">
+      <section className="bg-obsidian-light border border-border p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div>
+          <h1 className="font-heading text-4xl font-black text-offwhite tracking-tighter uppercase">
+            Appointments<span className="text-electric">.</span>
+          </h1>
+          <p className="font-mono text-zinc-500 text-xs tracking-widest uppercase mt-2">
+            Interview Schedule Matrix
+          </p>
         </div>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        
+        <div className="w-full sm:w-64">
+           <label className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-1 block">Global Filter</label>
+           <div className="relative">
+              <select
+                className="w-full appearance-none bg-obsidian border border-border text-sm font-mono text-offwhite py-2.5 pl-4 pr-10 focus:outline-none focus:border-electric transition-colors uppercase cursor-pointer"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Appts</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-electric bg-obsidian-light border-l border-border">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+           </div>
+        </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="card p-5">
-          <h2 className="section-title text-xl">Upcoming</h2>
+      {error && (
+        <div className="p-3 border border-red-500/50 bg-red-500/10 text-red-500 font-mono text-xs uppercase tracking-widest">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <section className="flex flex-col gap-4">
+          <div className="border-b border-border pb-2">
+             <h2 className="font-heading text-2xl font-black text-electric uppercase tracking-tight">Active_Queue</h2>
+          </div>
+          
           {loading ? (
-            <Loading />
+             <div className="p-12 border border-border border-dashed flex items-center justify-center">
+               <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Syncing_</div>
+            </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {grouped.upcoming.length ? (
-                grouped.upcoming.map(renderInterview)
-              ) : (
-                <p className="text-slate-600">No upcoming interviews.</p>
-              )}
+            <div className="space-y-4">
+              <AnimatePresence>
+                {grouped.upcoming.length ? (
+                  grouped.upcoming.map((i, idx) => renderInterview(i, idx))
+                ) : (
+                  <div className="p-8 border border-border border-dashed flex justify-center text-center">
+                    <p className="font-mono text-zinc-500 text-xs uppercase tracking-widest">No active items.</p>
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </section>
-        <section className="card p-5">
-          <h2 className="section-title text-xl">Past</h2>
+
+        <section className="flex flex-col gap-4">
+          <div className="border-b border-border pb-2">
+             <h2 className="font-heading text-2xl font-black text-zinc-500 uppercase tracking-tight">Archive_Log</h2>
+          </div>
+          
           {loading ? (
-            <Loading />
+             <div className="p-12 border border-border border-dashed flex items-center justify-center">
+               <div className="font-mono text-zinc-500 animate-pulse tracking-widest uppercase text-sm">Syncing_</div>
+            </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {grouped.past.length ? (
-                grouped.past.map(renderInterview)
-              ) : (
-                <p className="text-slate-600">No past interviews.</p>
-              )}
+            <div className="space-y-4">
+               <AnimatePresence>
+                {grouped.past.length ? (
+                  grouped.past.map((i, idx) => renderInterview(i, idx))
+                ) : (
+                  <div className="p-8 border border-border border-dashed flex justify-center text-center">
+                    <p className="font-mono text-zinc-500 text-xs uppercase tracking-widest">Log is empty.</p>
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </section>

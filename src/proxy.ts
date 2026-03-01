@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const origin = request.headers.get('origin');
-  console.log(`[Middleware] ${request.method} ${request.nextUrl.pathname} | Origin: ${origin || 'None'}`);
+  console.log(`[Proxy] ${request.method} ${request.nextUrl.pathname} | Origin: ${origin || 'None'}`);
   
   const allowedOrigins = [
     process.env.FRONTEND_URL, 

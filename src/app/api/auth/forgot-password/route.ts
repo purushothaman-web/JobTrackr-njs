@@ -49,14 +49,23 @@ export async function POST(req: NextRequest) {
     const appUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
     const resetUrl = `${appUrl}/reset-password/${rawToken}`;
     const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-        <h2 style="color: #333;">Password reset request</h2>
-        <p>Hello,</p>
-        <p>You requested a password reset. Click the button below:</p>
-        <p style="text-align: center;">
-          <a href="${resetUrl}" style="background-color: #1D4ED8; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Reset Password</a>
+      <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: auto; padding: 30px; border: 2px solid #27272a; background-color: #0a0a0a; color: #fafafa;">
+        <h2 style="font-weight: 900; text-transform: uppercase; letter-spacing: -1px; margin-bottom: 20px; font-size: 24px; color: #fafafa;">SYS_OVERRIDE<span style="color: #a3e635;">.</span></h2>
+        <p style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #a1a1aa; border-bottom: 1px solid #27272a; padding-bottom: 10px; margin-bottom: 20px;">
+          Reset Synchronization Protocol
         </p>
-        <p>This link expires in 1 hour.</p>
+        <p style="font-size: 14px; margin-bottom: 20px; line-height: 1.5;">A password reset sequence has been initiated for your coordinates. Execute the link below to confirm.</p>
+        <div style="margin: 30px 0;">
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; font-size: 14px; color: #0a0a0a; background-color: #a3e635; text-decoration: none; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border: 1px solid #a3e635;">
+            [ RESET_CIPHER ]
+          </a>
+        </div>
+        <p style="font-size: 12px; color: #a3e635; font-weight: bold; margin-bottom: 20px;">Link expires in 1 hour.</p>
+        <p style="font-size: 12px; color: #71717a; line-height: 1.5;">If this request is unrecognized, your matrix is unharmed. Purge this transmission.</p>
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed #27272a; font-size: 10px; color: #52525b; word-break: break-all;">
+          MANUAL OVERRIDE LINK:<br/>
+          <a href="${resetUrl}" style="color: #a3e635; text-decoration: none;">${resetUrl}</a>
+        </div>
       </div>
     `;
 

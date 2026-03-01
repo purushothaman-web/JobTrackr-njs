@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { api } from '@/lib/api';
+import FormField from '@/components/FormField';
+import { Button } from '@/components/Button';
+import { motion } from 'framer-motion';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -19,7 +22,7 @@ const ForgotPassword = () => {
       const response = await api.post('/auth/forgot-password', { email });
       setMessage(
         response.data?.data?.message ||
-          'If an account with that email exists, you will receive a password reset link shortly.'
+          'If an account exists, a link will be sent.'
       );
     } catch (err: any) {
       setError(err.response?.data?.error || 'An error occurred. Please try again.');
@@ -29,48 +32,55 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 px-2">
-      <div className="w-full max-w-sm sm:max-w-md bg-white rounded-2xl shadow-xl p-4 sm:p-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center text-[#1E293B]">Forgot Password</h1>
+    <div className="flex flex-col items-center justify-center min-h-[85vh] py-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md p-8 bg-obsidian-light border border-border"
+      >
+        <div className="mb-10 border-b border-border pb-6">
+          <h1 className="font-heading text-4xl font-black text-offwhite tracking-tighter uppercase">
+            Recover<span className="text-electric">.</span>
+          </h1>
+          <p className="font-mono text-zinc-500 text-xs tracking-widest uppercase mt-4">
+            Reset Access Credentials
+          </p>
+        </div>
 
         {message && (
-          <p role="alert" className="mb-4 text-center text-green-600 bg-green-100 p-2 sm:p-3 rounded-xl border border-green-300 font-semibold">
+          <div className="mb-6 p-3 border border-electric/50 bg-electric/10 text-electric font-mono text-xs text-center uppercase tracking-widest">
             {message}
-          </p>
+          </div>
         )}
         {error && (
-          <p role="alert" className="mb-4 text-center text-red-600 bg-red-100 p-2 sm:p-3 rounded-xl border border-red-300 font-semibold">
+          <div className="mb-6 p-3 border border-red-500/50 bg-red-500/10 text-red-500 font-mono text-xs text-center uppercase tracking-widest">
             {error}
-          </p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-gray-50 shadow rounded-xl p-4 sm:p-6">
-          <div className="mb-6 sm:mb-8">
-            <label htmlFor="email" className="block text-gray-700 font-semibold mb-2">
-              Email Address
-            </label>
-            <input
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div>
+            <FormField
+              label="Account Email"
               type="email"
-              id="email"
               name="email"
-              required
-              autoComplete="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              handleChange={(e) => setEmail(e.target.value)}
+              placeholder="operator@domain.com"
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:px-6 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed transition"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
+          <div className="pt-6 border-t border-border">
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full"
+            >
+              {loading ? 'Transmitting...' : 'Link Request'}
+            </Button>
+          </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 };
