@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   keywords: ['job tracker', 'career management', 'application tracking system', 'interview preparation', 'job search organizer'],
   authors: [{ name: 'JobTrackr Team' }],
   creator: 'JobTrackr',
+  verification: {
+    google: 'aYOqsJ9JSK0Lw1uklsgsZ_duDzTS4oHgEo8T9erfsTU', // Add your Google code here
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
